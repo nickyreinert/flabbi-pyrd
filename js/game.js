@@ -4,7 +4,7 @@
 
 const ASSETS = {
     bird: { src: 'assets/bird.svg', color: '#FFD700' }, // Gold fallback
-    pipe: { src: 'assets/pipe.png', color: '#2F4F4F' }, // Dark Slate Gray fallback
+    pipe: { src: 'assets/pipe.svg', color: '#2F4F4F' }, // Dark Slate Gray fallback
     bg:   { src: 'assets/bg.svg',   color: '#87CEEB' },  // Sky Blue fallback
     pacman: { src: 'assets/pacman.png', color: '#FFFF00' },
     enemy_shoot: { src: 'assets/ghost_red.png', color: '#FF0000' },
@@ -454,39 +454,45 @@ class Pipe {
             ctx.fillRect(this.x, this.bottomY, this.width, canvasHeight - this.bottomY);
         }
 
-        // Draw signboard on top pipe
-        this.drawSignboard(ctx, this.x, this.topHeight - CONFIG.SIGNBOARD_HEIGHT - CONFIG.SIGNBOARD_OFFSET);
+        // Draw Jargon on the longer pipe segment
+        const bottomHeight = canvasHeight - this.bottomY;
+        if (this.topHeight > bottomHeight) {
+            this.drawVerticalJargon(ctx, this.x, 0, this.topHeight);
+        } else {
+            this.drawVerticalJargon(ctx, this.x, this.bottomY, bottomHeight);
+        }
     }
 
-    drawSignboard(ctx, x, y) {
-        const boardWidth = this.width * 1.5;
-        const boardHeight = CONFIG.SIGNBOARD_HEIGHT;
-        const boardX = x - (boardWidth - this.width) / 2;
+    drawVerticalJargon(ctx, x, y, height) {
+        ctx.save();
+        // Center of the pipe segment
+        ctx.translate(x + this.width / 2, y + height / 2);
+        ctx.rotate(-Math.PI / 2); // Text runs bottom-to-top
 
-        // Signboard background
         ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(boardX, y, boardWidth, boardHeight);
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(boardX, y, boardWidth, boardHeight);
-
-        // Text
-        ctx.fillStyle = '#000000';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-
-        // Dynamic font sizing
-        let fontSize = 16;
+        
+        // Dynamic font sizing to fit height
+        let fontSize = 20;
         ctx.font = `bold ${fontSize}px Arial`;
         let textWidth = ctx.measureText(this.jargon).width;
-
-        while (textWidth > boardWidth - 10 && fontSize > 10) {
+        
+        // Fit text within pipe height (minus padding)
+        const maxTextWidth = height - 20;
+        while (textWidth > maxTextWidth && fontSize > 10) {
             fontSize--;
             ctx.font = `bold ${fontSize}px Arial`;
             textWidth = ctx.measureText(this.jargon).width;
         }
 
-        ctx.fillText(this.jargon, boardX + boardWidth / 2, y + boardHeight / 2);
+        // Draw text with outline
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 3;
+        ctx.strokeText(this.jargon, 0, 0);
+        ctx.fillText(this.jargon, 0, 0);
+
+        ctx.restore();
     }
 
     getBounds() {
