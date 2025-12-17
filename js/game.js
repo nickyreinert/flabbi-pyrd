@@ -385,12 +385,16 @@ class Pipe {
         this.jargon = '';
     }
 
-    reset(x, canvasHeight) {
+    reset(x, canvasHeight, gap) {
         this.x = x;
+        this.gap = gap || CONFIG.PIPE_GAP_START;
         const minHeight = 50;
-        const maxHeight = canvasHeight - CONFIG.PIPE_GAP - 50;
+        // Ensure we have enough space for the gap
+        const safeGap = Math.min(this.gap, canvasHeight - 100);
+        const maxHeight = canvasHeight - safeGap - 50;
+        
         this.topHeight = Math.random() * (maxHeight - minHeight) + minHeight;
-        this.bottomY = this.topHeight + CONFIG.PIPE_GAP;
+        this.bottomY = this.topHeight + safeGap;
         this.passed = false;
         this.jargon = JARGON_LIST[Math.floor(Math.random() * JARGON_LIST.length)];
     }
@@ -731,8 +735,9 @@ class Game {
             document.getElementById('sys_g').value = currentGravity;
             document.getElementById('disp_g').textContent = currentGravity;
             
-            document.getElementById('sys_gp').value = CONFIG.PIPE_GAP;
-            document.getElementById('disp_gp').textContent = CONFIG.PIPE_GAP;
+            // Use PIPE_GAP_END as the configurable value for now
+            document.getElementById('sys_gp').value = CONFIG.PIPE_GAP_END;
+            document.getElementById('disp_gp').textContent = CONFIG.PIPE_GAP_END;
             
             document.getElementById('sys_sp').value = CONFIG.PIPE_SPACING;
             document.getElementById('disp_sp').textContent = CONFIG.PIPE_SPACING;
@@ -762,7 +767,7 @@ class Game {
 
         // Apply to Config
         CONFIG.GRAVITY_NORMAL = newGravity; // Update base config
-        CONFIG.PIPE_GAP = newGap;
+        CONFIG.PIPE_GAP_END = newGap; // Update the target gap
         CONFIG.PIPE_SPACING = newSpacing;
 
         // Apply immediately to current game state
@@ -785,6 +790,7 @@ class Game {
         // Set difficulty
         const selectorName = `difficulty_${source}`;
         const mode = document.querySelector(`input[name="${selectorName}"]:checked`).value;
+        this.difficulty = mode;
         this.bird.gravity = mode === 'simple' ? CONFIG.GRAVITY_SIMPLE : CONFIG.GRAVITY_NORMAL;
 
         // Reset bird
@@ -797,10 +803,12 @@ class Game {
         this.frameCount = 0;
 
         // Reset pipes
+        const initialGap = CONFIG.PIPE_GAP_START;
         this.pipes.forEach((pipe, i) => {
             pipe.reset(
                 this.logicalWidth + i * CONFIG.PIPE_SPACING,
-                this.logicalHeight
+                this.logicalHeight,
+                initialGap
             );
         });
         
@@ -983,7 +991,15 @@ class Game {
                 const lastPipe = this.pipes.reduce((max, p) => 
                     p.x > max.x ? p : max
                 );
-                pipe.reset(lastPipe.x + CONFIG.PIPE_SPACING, this.logicalHeight);
+                
+                // Calculate dynamic gap
+                let nextGap = CONFIG.PIPE_GAP_START;
+                if (this.difficulty === 'normal') {
+                    // Shrink gap based on score (e.g. -5px per point), capped at PIPE_GAP_END
+                    nextGap = Math.max(CONFIG.PIPE_GAP_END, CONFIG.PIPE_GAP_START - (this.score * 5));
+                }
+
+                pipe.reset(lastPipe.x + CONFIG.PIPE_SPACING, this.logicalHeight, nextGap);
             }
 
             // Check collision
