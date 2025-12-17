@@ -14,6 +14,7 @@
 - Modular code (import/export)
 - Event delegation
 - No global variables
+- not more than 200 lines per file, split if necessary
 
 ## External CLI Review (Self-Correction)
 - **Check Availability**: Look at `.orkestra/config.yaml` to see if `sub_agents` are configured.
