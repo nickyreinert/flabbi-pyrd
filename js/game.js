@@ -5,7 +5,11 @@
 const ASSETS = {
     bird: { src: 'assets/bird.png', color: '#FFD700' }, // Gold fallback
     pipe: { src: 'assets/pipe.png', color: '#2F4F4F' }, // Dark Slate Gray fallback
-    bg:   { src: 'assets/bg.png',   color: '#87CEEB' }  // Sky Blue fallback
+    bg:   { src: 'assets/bg.png',   color: '#87CEEB' },  // Sky Blue fallback
+    pacman: { src: 'assets/pacman.png', color: '#FFFF00' },
+    enemy_shoot: { src: 'assets/ghost_red.png', color: '#FF0000' },
+    enemy_eat: { src: 'assets/ghost_blue.png', color: '#0000FF' },
+    projectile: { src: 'assets/bullet.png', color: '#00FF00' }
 };
 
 const JARGON_LIST = [
@@ -41,8 +45,67 @@ const CONFIG = {
     PIPE_POOL_SIZE: 6,
     PIPE_SPACING: 300,
     SIGNBOARD_HEIGHT: 50,
-    SIGNBOARD_OFFSET: 20
+    SIGNBOARD_OFFSET: 20,
+    PROJECTILE_SPEED: 10,
+    ENEMY_SPEED: 3,
+    ENEMY_SPAWN_RATE: 120 // Frames
 };
+
+// ============================
+// AUDIO CONTROLLER
+// ============================
+
+class AudioController {
+    constructor() {
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        this.enabled = true;
+    }
+
+    playTone(freq, type, duration, vol = 0.1) {
+        if (!this.enabled) return;
+        
+        // Resume context if suspended (browser policy)
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
+    }
+
+    flap() {
+        this.playTone(400, 'sine', 0.1);
+    }
+
+    score() {
+        this.playTone(1000, 'square', 0.1, 0.05);
+    }
+
+    hit() {
+        this.playTone(150, 'sawtooth', 0.3, 0.2);
+    }
+
+    shoot() {
+        this.playTone(800, 'square', 0.05, 0.05);
+        setTimeout(() => this.playTone(600, 'square', 0.05, 0.05), 50);
+    }
+
+    explosion() {
+        this.playTone(100, 'sawtooth', 0.2, 0.2);
+    }
+}
 
 // ============================
 // ASSET LOADER
@@ -86,6 +149,81 @@ class AssetLoader {
 }
 
 // ============================
+// PROJECTILE CLASS
+// ============================
+
+class Projectile {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = 10;
+        this.height = 10;
+        this.markedForDeletion = false;
+    }
+
+    update() {
+        this.x += CONFIG.PROJECTILE_SPEED;
+        if (this.x > 2000) this.markedForDeletion = true; // Cleanup
+    }
+
+    draw(ctx, assetLoader) {
+        if (assetLoader.isReady('projectile')) {
+            ctx.drawImage(assetLoader.get('projectile'), this.x, this.y, this.width, this.height);
+        } else {
+            ctx.fillStyle = ASSETS.projectile.color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
+    }
+
+    getBounds() {
+        return { x: this.x, y: this.y, width: this.width, height: this.height };
+    }
+}
+
+// ============================
+// ENEMY CLASS
+// ============================
+
+class Enemy {
+    constructor(canvasWidth, canvasHeight) {
+        this.x = canvasWidth;
+        this.y = Math.random() * (canvasHeight - 100) + 50;
+        this.width = 30;
+        this.height = 30;
+        this.type = Math.random() > 0.5 ? 'SHOOTABLE' : 'EATABLE';
+        this.markedForDeletion = false;
+        this.speed = CONFIG.ENEMY_SPEED + Math.random();
+        this.angle = 0;
+    }
+
+    update() {
+        this.x -= this.speed;
+        this.angle += 0.1;
+        this.y += Math.sin(this.angle) * 2; // Wavy movement
+
+        if (this.x + this.width < 0) this.markedForDeletion = true;
+    }
+
+    draw(ctx, assetLoader) {
+        const assetKey = this.type === 'SHOOTABLE' ? 'enemy_shoot' : 'enemy_eat';
+        
+        if (assetLoader.isReady(assetKey)) {
+            ctx.drawImage(assetLoader.get(assetKey), this.x, this.y, this.width, this.height);
+        } else {
+            ctx.fillStyle = ASSETS[assetKey].color;
+            // Draw circle for enemies
+            ctx.beginPath();
+            ctx.arc(this.x + this.width/2, this.y + this.height/2, this.width/2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    getBounds() {
+        return { x: this.x, y: this.y, width: this.width, height: this.height };
+    }
+}
+
+// ============================
 // BIRD CLASS
 // ============================
 
@@ -98,36 +236,59 @@ class Bird {
         this.velocity = 0;
         this.rotation = 0;
         this.gravity = CONFIG.GRAVITY_NORMAL;
+        this.cursorControl = false;
+        this.funMode = false;
     }
 
     flap() {
+        if (this.cursorControl) return;
         this.velocity = CONFIG.FLAP_POWER;
     }
 
     update() {
-        this.velocity += this.gravity;
-        this.y += this.velocity;
-
-        // Update rotation based on velocity
-        this.rotation = Math.min(Math.max(this.velocity * 3, -30), 90);
+        if (this.cursorControl) {
+            // Direct velocity control, no gravity
+            this.y += this.velocity;
+            this.rotation = 0;
+        } else {
+            this.velocity += this.gravity;
+            this.y += this.velocity;
+            // Update rotation based on velocity
+            this.rotation = Math.min(Math.max(this.velocity * 3, -30), 90);
+        }
     }
 
     draw(ctx, assetLoader) {
         ctx.save();
         ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
-        ctx.rotate(this.rotation * Math.PI / 180);
-
-        if (assetLoader.isReady('bird')) {
-            ctx.drawImage(
-                assetLoader.get('bird'),
-                -this.width / 2,
-                -this.height / 2,
-                this.width,
-                this.height
-            );
+        
+        if (this.funMode) {
+            // Pacman rotation logic (always face right or movement direction)
+            ctx.rotate(0); 
+            if (assetLoader.isReady('pacman')) {
+                ctx.drawImage(assetLoader.get('pacman'), -this.width/2, -this.height/2, this.width, this.height);
+            } else {
+                // Draw Pacman fallback
+                ctx.fillStyle = ASSETS.pacman.color;
+                ctx.beginPath();
+                ctx.arc(0, 0, this.width/2, 0.2 * Math.PI, 1.8 * Math.PI);
+                ctx.lineTo(0, 0);
+                ctx.fill();
+            }
         } else {
-            ctx.fillStyle = ASSETS.bird.color;
-            ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
+            ctx.rotate(this.rotation * Math.PI / 180);
+            if (assetLoader.isReady('bird')) {
+                ctx.drawImage(
+                    assetLoader.get('bird'),
+                    -this.width / 2,
+                    -this.height / 2,
+                    this.width,
+                    this.height
+                );
+            } else {
+                ctx.fillStyle = ASSETS.bird.color;
+                ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
+            }
         }
 
         ctx.restore();
@@ -271,11 +432,15 @@ class Game {
         this.setupCanvas();
         
         this.assetLoader = new AssetLoader();
+        this.audio = new AudioController();
         this.state = GAME_STATE.START;
         this.score = 0;
         
         this.bird = new Bird(100, this.canvas.height / 2);
         this.pipes = [];
+        this.projectiles = [];
+        this.enemies = [];
+        this.frameCount = 0;
         
         // Create pipe pool
         for (let i = 0; i < CONFIG.PIPE_POOL_SIZE; i++) {
@@ -313,22 +478,46 @@ class Game {
 
     setupEventListeners() {
         // Start button
-        document.getElementById('startBtn').addEventListener('click', () => this.startGame());
+        document.getElementById('startBtn').addEventListener('click', () => this.startGame('start'));
         
         // Restart button
-        document.getElementById('restartBtn').addEventListener('click', () => this.startGame());
+        document.getElementById('restartBtn').addEventListener('click', () => this.startGame('restart'));
         
         // Flap controls
         const flapHandler = (e) => {
             if (this.state === GAME_STATE.PLAYING) {
                 e.preventDefault();
                 this.bird.flap();
+                this.audio.flap();
             }
         };
         
         window.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') {
+            if (this.bird.cursorControl) {
+                if (e.code === 'ArrowUp') {
+                    e.preventDefault();
+                    this.bird.velocity = -5;
+                }
+                if (e.code === 'ArrowDown') {
+                    e.preventDefault();
+                    this.bird.velocity = 5;
+                }
+            } else if (e.code === 'Space') {
                 flapHandler(e);
+            }
+
+            // Shoot Projectile (Fun Mode)
+            if (e.code === 'KeyS' && this.bird.funMode) {
+                this.projectiles.push(new Projectile(this.bird.x + this.bird.width, this.bird.y + this.bird.height/2));
+                this.audio.shoot();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (this.bird.cursorControl) {
+                if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
+                    this.bird.velocity = 0;
+                }
             }
         });
         
@@ -342,19 +531,112 @@ class Game {
         window.addEventListener('resize', () => {
             this.setupCanvas();
         });
+
+        // Cheat Code Listener
+        let keySequence = [];
+        const cheatCode = "iddqd";
+        window.addEventListener('keydown', (e) => {
+            keySequence.push(e.key.toLowerCase());
+            if (keySequence.length > cheatCode.length) {
+                keySequence.shift();
+            }
+            if (keySequence.join('') === cheatCode) {
+                this.toggleCheatModal();
+            }
+        });
+
+        // Cheat Modal Controls
+        document.getElementById('sys_ok').addEventListener('click', () => this.applyCheats());
+        document.getElementById('sys_cl').addEventListener('click', () => this.toggleCheatModal());
+        
+        // Live update values in modal
+        const paramMap = {
+            'sys_g': 'disp_g',
+            'sys_gp': 'disp_gp',
+            'sys_sp': 'disp_sp'
+        };
+
+        Object.keys(paramMap).forEach(id => {
+            document.getElementById(id).addEventListener('input', (e) => {
+                document.getElementById(paramMap[id]).textContent = e.target.value;
+            });
+        });
     }
 
-    startGame() {
+    toggleCheatModal() {
+        const modal = document.getElementById('sysConfig');
+        const isHidden = modal.classList.contains('hidden');
+        
+        if (isHidden) {
+            // Open Modal
+            modal.classList.remove('hidden');
+            
+            // Populate current values
+            const currentGravity = this.bird.gravity || CONFIG.GRAVITY_NORMAL;
+            document.getElementById('sys_g').value = currentGravity;
+            document.getElementById('disp_g').textContent = currentGravity;
+            
+            document.getElementById('sys_gp').value = CONFIG.PIPE_GAP;
+            document.getElementById('disp_gp').textContent = CONFIG.PIPE_GAP;
+            
+            document.getElementById('sys_sp').value = CONFIG.PIPE_SPACING;
+            document.getElementById('disp_sp').textContent = CONFIG.PIPE_SPACING;
+            
+            document.getElementById('sys_cr').checked = this.bird.cursorControl;
+            document.getElementById('sys_fn').checked = this.bird.funMode;
+
+            // Pause game if playing
+            if (this.state === GAME_STATE.PLAYING) {
+                this.paused = true;
+            }
+        } else {
+            // Close Modal
+            modal.classList.add('hidden');
+            if (this.state === GAME_STATE.PLAYING) {
+                this.paused = false;
+            }
+        }
+    }
+
+    applyCheats() {
+        const newGravity = parseFloat(document.getElementById('sys_g').value);
+        const newGap = parseInt(document.getElementById('sys_gp').value);
+        const newSpacing = parseInt(document.getElementById('sys_sp').value);
+        const cursorControl = document.getElementById('sys_cr').checked;
+        const funMode = document.getElementById('sys_fn').checked;
+
+        // Apply to Config
+        CONFIG.GRAVITY_NORMAL = newGravity; // Update base config
+        CONFIG.PIPE_GAP = newGap;
+        CONFIG.PIPE_SPACING = newSpacing;
+
+        // Apply immediately to current game state
+        this.bird.gravity = newGravity;
+        this.bird.cursorControl = cursorControl;
+        this.bird.funMode = funMode;
+        
+        // Note: Pipe gap/spacing will apply to new pipes generated
+        
+        this.toggleCheatModal();
+    }
+
+    startGame(source = 'start') {
         this.state = GAME_STATE.PLAYING;
         this.score = 0;
         
         // Set difficulty
-        const mode = document.querySelector('input[name="difficulty"]:checked').value;
+        const selectorName = `difficulty_${source}`;
+        const mode = document.querySelector(`input[name="${selectorName}"]:checked`).value;
         this.bird.gravity = mode === 'simple' ? CONFIG.GRAVITY_SIMPLE : CONFIG.GRAVITY_NORMAL;
 
         // Reset bird
         this.bird.reset(100, this.logicalHeight / 2);
         
+        // Reset entities
+        this.projectiles = [];
+        this.enemies = [];
+        this.frameCount = 0;
+
         // Reset pipes
         this.pipes.forEach((pipe, i) => {
             pipe.reset(
@@ -371,6 +653,9 @@ class Game {
     }
 
     gameOver() {
+        if (this.state !== GAME_STATE.GAME_OVER) {
+            this.audio.hit();
+        }
         this.state = GAME_STATE.GAME_OVER;
         
         // Update UI
@@ -380,10 +665,72 @@ class Game {
     }
 
     update() {
-        if (this.state !== GAME_STATE.PLAYING) return;
+        if (this.state !== GAME_STATE.PLAYING || this.paused) return;
+
+        this.frameCount++;
 
         // Update bird
         this.bird.update();
+
+        // Spawn Enemies (Fun Mode)
+        if (this.bird.funMode && this.frameCount % CONFIG.ENEMY_SPAWN_RATE === 0) {
+            this.enemies.push(new Enemy(this.logicalWidth, this.logicalHeight));
+        }
+
+        // Update Projectiles
+        this.projectiles.forEach((proj, index) => {
+            proj.update();
+            if (proj.markedForDeletion) {
+                this.projectiles.splice(index, 1);
+            }
+        });
+
+        // Update Enemies
+        this.enemies.forEach((enemy, index) => {
+            enemy.update();
+            if (enemy.markedForDeletion) {
+                this.enemies.splice(index, 1);
+            }
+        });
+
+        // Check Projectile Collisions
+        this.projectiles.forEach((proj, pIndex) => {
+            // Vs Enemies
+            this.enemies.forEach((enemy, eIndex) => {
+                if (this.checkRectCollision(proj.getBounds(), enemy.getBounds())) {
+                    if (enemy.type === 'SHOOTABLE') {
+                        enemy.markedForDeletion = true;
+                        proj.markedForDeletion = true;
+                        this.score += 5; // Bonus score
+                        document.getElementById('score').textContent = this.score;
+                        this.audio.explosion();
+                    }
+                }
+            });
+
+            // Vs Pipes
+            this.pipes.forEach(pipe => {
+                const bounds = pipe.getBounds();
+                if (this.checkRectCollision(proj.getBounds(), bounds.top) || 
+                    this.checkRectCollision(proj.getBounds(), bounds.bottom)) {
+                    proj.markedForDeletion = true;
+                }
+            });
+        });
+
+        // Check Enemy Collisions (Vs Bird)
+        this.enemies.forEach((enemy, index) => {
+            if (this.checkRectCollision(this.bird.getBounds(), enemy.getBounds())) {
+                if (enemy.type === 'EATABLE') {
+                    enemy.markedForDeletion = true;
+                    this.score += 2; // Bonus score
+                    document.getElementById('score').textContent = this.score;
+                    this.audio.score();
+                } else if (enemy.type === 'SHOOTABLE') {
+                    this.gameOver();
+                }
+            }
+        });
 
         // Check if bird hits floor or ceiling
         if (this.bird.y + this.bird.height > this.logicalHeight || this.bird.y < 0) {
@@ -400,6 +747,7 @@ class Game {
                 pipe.passed = true;
                 this.score++;
                 document.getElementById('score').textContent = this.score;
+                this.audio.score();
             }
 
             // Recycle pipe
@@ -417,24 +765,22 @@ class Game {
         });
     }
 
+    checkRectCollision(rect1, rect2) {
+        return (
+            rect1.x < rect2.x + rect2.width &&
+            rect1.x + rect1.width > rect2.x &&
+            rect1.y < rect2.y + rect2.height &&
+            rect1.y + rect1.height > rect2.y
+        );
+    }
+
     checkCollision(bird, pipe) {
         const birdBounds = bird.getBounds();
         const pipeBounds = pipe.getBounds();
 
         // AABB collision detection
-        const hitTop = (
-            birdBounds.x < pipeBounds.top.x + pipeBounds.top.width &&
-            birdBounds.x + birdBounds.width > pipeBounds.top.x &&
-            birdBounds.y < pipeBounds.top.y + pipeBounds.top.height &&
-            birdBounds.y + birdBounds.height > pipeBounds.top.y
-        );
-
-        const hitBottom = (
-            birdBounds.x < pipeBounds.bottom.x + pipeBounds.bottom.width &&
-            birdBounds.x + birdBounds.width > pipeBounds.bottom.x &&
-            birdBounds.y < pipeBounds.bottom.y + pipeBounds.bottom.height &&
-            birdBounds.y + birdBounds.height > pipeBounds.bottom.y
-        );
+        const hitTop = this.checkRectCollision(birdBounds, pipeBounds.top);
+        const hitBottom = this.checkRectCollision(birdBounds, pipeBounds.bottom);
 
         return hitTop || hitBottom;
     }
@@ -460,6 +806,16 @@ class Game {
         // Draw pipes
         this.pipes.forEach(pipe => {
             pipe.draw(this.ctx, this.assetLoader, this.logicalHeight);
+        });
+
+        // Draw Enemies
+        this.enemies.forEach(enemy => {
+            enemy.draw(this.ctx, this.assetLoader);
+        });
+
+        // Draw Projectiles
+        this.projectiles.forEach(proj => {
+            proj.draw(this.ctx, this.assetLoader);
         });
 
         // Draw bird

@@ -161,6 +161,47 @@ body {
     border: 3px solid #FFD700;
 }
 
+/* System Config */
+#sysConfig h2 {
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    margin-bottom: 2rem;
+}
+
+.sys-params {
+    background: rgba(0, 0, 0, 0.8);
+    padding: 2rem;
+    border-radius: 10px;
+    border: 1px solid #00ff00;
+    width: 80%;
+    max-width: 400px;
+}
+
+.param-row {
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.param-row label {
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    display: flex;
+    justify-content: space-between;
+}
+
+.param-row input[type="range"] {
+    width: 100%;
+    cursor: pointer;
+}
+
+.sys-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
     #startScreen h1 {

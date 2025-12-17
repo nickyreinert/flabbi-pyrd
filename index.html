@@ -18,11 +18,11 @@
             
             <div class="difficulty-selector">
                 <label class="radio-label">
-                    <input type="radio" name="difficulty" value="normal" checked>
+                    <input type="radio" name="difficulty_start" value="normal" checked>
                     <span>Normal Mode</span>
                 </label>
                 <label class="radio-label">
-                    <input type="radio" name="difficulty" value="simple">
+                    <input type="radio" name="difficulty_start" value="simple">
                     <span>Simple Mode</span>
                 </label>
             </div>
@@ -39,31 +39,23 @@
         <div id="gameOverScreen" class="overlay hidden">
             <h2>Game Over</h2>
             <p id="finalScore">You cleared 0 challenges.</p>
+            
+            <div class="difficulty-selector">
+                <label class="radio-label">
+                    <input type="radio" name="difficulty_restart" value="normal" checked>
+                    <span>Normal Mode</span>
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="difficulty_restart" value="simple">
+                    <span>Simple Mode</span>
+                </label>
+            </div>
+
             <button id="restartBtn" class="btn">Play Again</button>
         </div>
 
-        <!-- Cheat Screen -->
-        <div id="cheatScreen" class="overlay hidden">
-            <h2>DEV MODE</h2>
-            <div class="cheat-controls">
-                <div class="control-group">
-                    <label>Gravity (Normal): <span id="val-gravity"></span></label>
-                    <input type="range" id="cheatGravity" min="0.1" max="1.0" step="0.1">
-                </div>
-                <div class="control-group">
-                    <label>Pipe Gap: <span id="val-gap"></span></label>
-                    <input type="range" id="cheatGap" min="100" max="400" step="10">
-                </div>
-                <div class="control-group">
-                    <label>Pipe Spacing: <span id="val-spacing"></span></label>
-                    <input type="range" id="cheatSpacing" min="200" max="600" step="10">
-                </div>
-            </div>
-            <div class="cheat-buttons">
-                <button id="applyCheatsBtn" class="btn" style="background: #28a745;">Apply</button>
-                <button id="closeCheatsBtn" class="btn" style="background: #6c757d;">Close</button>
-            </div>
-        </div>
+        <!-- System Configuration -->
+        <div id="sysConfig" class="overlay hidden"><h2>congratz' nerdy fren</h2><div class="sys-params"><div class="param-row"><label>G-Force: <span id="disp_g"></span></label><input type="range" id="sys_g" min="0.1" max="1.0" step="0.1"></div><div class="param-row"><label>V-Gap: <span id="disp_gp"></span></label><input type="range" id="sys_gp" min="100" max="400" step="10"></div><div class="param-row"><label>H-Space: <span id="disp_sp"></span></label><input type="range" id="sys_sp" min="200" max="600" step="10"></div><div class="param-row" style="flex-direction:row;align-items:center;gap:1rem;"><input type="checkbox" id="sys_cr" style="width:20px;height:20px;"><label for="sys_cr" style="margin-bottom:0;cursor:pointer;">Input Override A</label></div><div class="param-row" style="flex-direction:row;align-items:center;gap:1rem;"><input type="checkbox" id="sys_fn" style="width:20px;height:20px;"><label for="sys_fn" style="margin-bottom:0;cursor:pointer;">Input Override B</label></div></div><div class="sys-actions"><button id="sys_ok" class="btn" style="background:#28a745;">OK</button><button id="sys_cl" class="btn" style="background:#6c757d;">X</button></div></div>
     </div>
     
     <script src="js/game.js"></script>

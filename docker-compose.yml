@@ -1,0 +1,9 @@
+services:
+  flappy-corp:
+    build: .
+    container_name: flappy-corp
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/usr/share/nginx/html
+    restart: unless-stopped
