@@ -7,8 +7,8 @@ const ASSETS = {
     pipe: { src: 'assets/pipe.svg', color: '#2F4F4F' }, // Dark Slate Gray fallback
     bg:   { src: 'assets/bg.svg',   color: '#87CEEB' },  // Sky Blue fallback
     pacman: { src: 'assets/pacman.svg', color: '#FFFF00' },
-    enemy_shoot: { src: 'assets/ghost_red.png', color: '#FF0000' },
-    enemy_eat: { src: 'assets/ghost_blue.png', color: '#0000FF' },
+    enemy_shoot: { src: 'assets/ghost_red.svg', color: '#FF0000' },
+    enemy_eat: { src: 'assets/ghost_blue.svg', color: '#0000FF' },
     projectile: { src: 'assets/spit.svg', color: '#00BFFF' }
 };
 
@@ -70,12 +70,26 @@ const AUDIO_CONFIG = {
 
 class AudioController {
     constructor() {
-        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        this.ctx = null;
         this.enabled = true;
+    }
+
+    init() {
+        if (!this.ctx) {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
     }
 
     playTone(freq, type, duration, vol = 0.1) {
         if (!this.enabled) return;
+        
+        // Ensure context is initialized
+        if (!this.ctx) {
+            this.init();
+        }
         
         // Resume context if suspended (browser policy)
         if (this.ctx.state === 'suspended') {
@@ -861,6 +875,9 @@ class Game {
     }
 
     startGame(source = 'start') {
+        // Initialize Audio Context on user interaction
+        this.audio.init();
+
         this.state = GAME_STATE.PLAYING;
         this.score = 0;
         
@@ -889,13 +906,17 @@ class Game {
         this.frameCount = 0;
 
         // Reset pipes
+        this.jargonQueue = [...JARGON_LIST].sort(() => Math.random() - 0.5);
+        
         const initialGap = CONFIG.PIPE_GAP_START * this.logicalHeight;
         const spacing = CONFIG.PIPE_SPACING * this.logicalWidth;
         this.pipes.forEach((pipe, i) => {
+            const jargon = this.jargonQueue.pop() || "Bonus";
             pipe.reset(
                 this.logicalWidth + i * spacing,
                 this.logicalHeight,
-                initialGap
+                initialGap,
+                jargon
             );
         });
         
@@ -916,6 +937,14 @@ class Game {
         document.getElementById('hud').classList.add('hidden');
         document.getElementById('gameOverScreen').classList.remove('hidden');
         document.getElementById('gameOverMessage').textContent = `You cleared ${this.score} challenges. Let’s make 2026 ridiculously good.`;
+    }
+
+    gameWon() {
+        this.state = GAME_STATE.WON;
+        document.getElementById('hud').classList.add('hidden');
+        document.getElementById('gameOverScreen').classList.remove('hidden');
+        document.getElementById('gameOverMessage').textContent = `YOU WON! You are fully aligned for 2026! Score: ${this.score}`;
+        this.audio.score();
     }
 
     shareResult() {
@@ -1082,6 +1111,8 @@ class Game {
 
         // Update pipes
         this.pipes.forEach(pipe => {
+            if (!pipe.active) return;
+
             pipe.update();
 
             // Check for score
@@ -1094,7 +1125,8 @@ class Game {
 
             // Recycle pipe
             if (pipe.isOffScreen()) {
-                const lastPipe = this.pipes.reduce((max, p) => 
+                const activePipes = this.pipes.filter(p => p.active);
+                const lastPipe = activePipes.reduce((max, p) => 
                     p.x > max.x ? p : max
                 );
                 
@@ -1115,11 +1147,19 @@ class Game {
                     nextX = this.logicalWidth + spacing;
                 }
 
-                pipe.reset(nextX, this.logicalHeight, nextGap);
+                const jargon = this.jargonQueue.pop();
+                if (jargon) {
+                    pipe.reset(nextX, this.logicalHeight, nextGap, jargon);
+                } else {
+                    pipe.active = false;
+                    if (this.pipes.every(p => !p.active)) {
+                        this.gameWon();
+                    }
+                }
             }
 
             // Check collision
-            if (this.checkCollision(this.bird, pipe)) {
+            if (pipe.active && this.checkCollision(this.bird, pipe)) {
                 this.gameOver();
             }
         });
