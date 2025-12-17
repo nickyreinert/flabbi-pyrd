@@ -6,10 +6,10 @@ const ASSETS = {
     bird: { src: 'assets/bird.svg', color: '#FFD700' }, // Gold fallback
     pipe: { src: 'assets/pipe.svg', color: '#2F4F4F' }, // Dark Slate Gray fallback
     bg:   { src: 'assets/bg.svg',   color: '#87CEEB' },  // Sky Blue fallback
-    pacman: { src: 'assets/pacman.png', color: '#FFFF00' },
+    pacman: { src: 'assets/pacman.svg', color: '#FFFF00' },
     enemy_shoot: { src: 'assets/ghost_red.png', color: '#FF0000' },
     enemy_eat: { src: 'assets/ghost_blue.png', color: '#0000FF' },
-    projectile: { src: 'assets/bullet.png', color: '#00FF00' }
+    projectile: { src: 'assets/spit.svg', color: '#00BFFF' }
 };
 
 const JARGON_LIST = [
@@ -31,7 +31,8 @@ const JARGON_LIST = [
 const GAME_STATE = {
     START: 'START',
     PLAYING: 'PLAYING',
-    GAME_OVER: 'GAME_OVER'
+    GAME_OVER: 'GAME_OVER',
+    WON: 'WON'
 };
 
 const CONFIG = {
@@ -336,14 +337,24 @@ class Bird {
         if (this.funMode) {
             // Pacman rotation logic (always face right or movement direction)
             ctx.rotate(0); 
-            if (assetLoader.isReady('pacman')) {
+            
+            // Animate Mouth (Open/Closed every 150ms)
+            const mouthOpen = Math.floor(Date.now() / 150) % 2 === 0;
+
+            if (mouthOpen && assetLoader.isReady('pacman')) {
                 ctx.drawImage(assetLoader.get('pacman'), -this.width/2, -this.height/2, this.width, this.height);
             } else {
-                // Draw Pacman fallback
+                // Draw Closed Mouth (Full Circle)
                 ctx.fillStyle = ASSETS.pacman.color;
                 ctx.beginPath();
-                ctx.arc(0, 0, this.width/2, 0.2 * Math.PI, 1.8 * Math.PI);
-                ctx.lineTo(0, 0);
+                ctx.arc(0, 0, this.width/2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Draw Eye
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(0, -this.height/4, 3, 0, Math.PI * 2);
                 ctx.fill();
             }
         } else {
@@ -396,11 +407,14 @@ class Pipe {
         this.width = CONFIG.PIPE_WIDTH;
         this.passed = false;
         this.jargon = '';
+        this.active = false;
     }
 
-    reset(x, canvasHeight, gap) {
+    reset(x, canvasHeight, gap, jargon) {
         this.x = x;
         this.gap = gap;
+        this.jargon = jargon;
+        this.active = true;
         const minHeight = 50;
         
         // Ensure we have enough space for the gap
@@ -416,7 +430,6 @@ class Pipe {
         this.bottomY = this.topHeight + safeGap;
         
         this.passed = false;
-        this.jargon = JARGON_LIST[Math.floor(Math.random() * JARGON_LIST.length)];
     }
 
     update() {
@@ -424,6 +437,8 @@ class Pipe {
     }
 
     draw(ctx, assetLoader, canvasHeight) {
+        if (!this.active) return;
+
         const pipeReady = assetLoader.isReady('pipe');
 
         // Draw top pipe

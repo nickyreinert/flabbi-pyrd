@@ -1,0 +1,6 @@
+<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+  <!-- Water Drop -->
+  <path d="M 10 0 Q 15 10 15 14 A 5 5 0 1 1 5 14 Q 5 10 10 0 Z" fill="#00BFFF" stroke="#00008B" stroke-width="1"/>
+  <!-- Shine -->
+  <path d="M 8 12 Q 6 14 8 16" stroke="#FFF" stroke-width="1" fill="none" opacity="0.6"/>
+</svg>
