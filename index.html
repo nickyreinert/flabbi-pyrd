@@ -15,6 +15,18 @@
         <div id="startScreen" class="overlay">
             <h1>Flappy Corp</h1>
             <p class="subtitle">Happy New Year! Ready to clear 2026?</p>
+            
+            <div class="difficulty-selector">
+                <label class="radio-label">
+                    <input type="radio" name="difficulty" value="normal" checked>
+                    <span>Normal Mode</span>
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="difficulty" value="simple">
+                    <span>Simple Mode</span>
+                </label>
+            </div>
+
             <button id="startBtn" class="btn">Start</button>
         </div>
         
@@ -28,6 +40,29 @@
             <h2>Game Over</h2>
             <p id="finalScore">You cleared 0 challenges.</p>
             <button id="restartBtn" class="btn">Play Again</button>
+        </div>
+
+        <!-- Cheat Screen -->
+        <div id="cheatScreen" class="overlay hidden">
+            <h2>DEV MODE</h2>
+            <div class="cheat-controls">
+                <div class="control-group">
+                    <label>Gravity (Normal): <span id="val-gravity"></span></label>
+                    <input type="range" id="cheatGravity" min="0.1" max="1.0" step="0.1">
+                </div>
+                <div class="control-group">
+                    <label>Pipe Gap: <span id="val-gap"></span></label>
+                    <input type="range" id="cheatGap" min="100" max="400" step="10">
+                </div>
+                <div class="control-group">
+                    <label>Pipe Spacing: <span id="val-spacing"></span></label>
+                    <input type="range" id="cheatSpacing" min="200" max="600" step="10">
+                </div>
+            </div>
+            <div class="cheat-buttons">
+                <button id="applyCheatsBtn" class="btn" style="background: #28a745;">Apply</button>
+                <button id="closeCheatsBtn" class="btn" style="background: #6c757d;">Close</button>
+            </div>
         </div>
     </div>
     

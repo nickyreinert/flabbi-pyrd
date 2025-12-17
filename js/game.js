@@ -31,7 +31,8 @@ const GAME_STATE = {
 };
 
 const CONFIG = {
-    GRAVITY: 0.5,
+    GRAVITY_NORMAL: 0.5,
+    GRAVITY_SIMPLE: 0.3,
     FLAP_POWER: -8,
     BIRD_SIZE: 40,
     PIPE_WIDTH: 80,
@@ -96,6 +97,7 @@ class Bird {
         this.height = CONFIG.BIRD_SIZE;
         this.velocity = 0;
         this.rotation = 0;
+        this.gravity = CONFIG.GRAVITY_NORMAL;
     }
 
     flap() {
@@ -103,7 +105,7 @@ class Bird {
     }
 
     update() {
-        this.velocity += CONFIG.GRAVITY;
+        this.velocity += this.gravity;
         this.y += this.velocity;
 
         // Update rotation based on velocity
@@ -346,6 +348,10 @@ class Game {
         this.state = GAME_STATE.PLAYING;
         this.score = 0;
         
+        // Set difficulty
+        const mode = document.querySelector('input[name="difficulty"]:checked').value;
+        this.bird.gravity = mode === 'simple' ? CONFIG.GRAVITY_SIMPLE : CONFIG.GRAVITY_NORMAL;
+
         // Reset bird
         this.bird.reset(100, this.logicalHeight / 2);
         

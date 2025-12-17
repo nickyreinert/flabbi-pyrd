@@ -65,6 +65,38 @@ body {
     color: #e0e0e0;
 }
 
+.difficulty-selector {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.2rem;
+    color: #e0e0e0;
+    cursor: pointer;
+    user-select: none;
+}
+
+.radio-label input[type="radio"] {
+    appearance: none;
+    width: 1.2rem;
+    height: 1.2rem;
+    border: 2px solid #FFD700;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+}
+
+.radio-label input[type="radio"]:checked {
+    background: #FFD700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
 /* Game Over Screen */
 #gameOverScreen h2 {
     font-size: 3rem;
