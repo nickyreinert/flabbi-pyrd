@@ -1,52 +1,125 @@
-# Implementation Plan: Flappy Bird Clone
+# Flappy Corp - Development Plan
 
-## 1. Project Overview
-We are building a Flappy Bird clone using vanilla HTML, CSS, and JavaScript. The goal is to have a functional game with a start screen, game loop, and game over screen.
+## Project Overview
+**Task:** Build "Flappy Corp" - a Flappy Bird clone with a corporate satire theme.
 
-## 2. Architecture
+**Tech Stack:** Vanilla JavaScript, HTML5 Canvas, CSS3. No frameworks.
 
-### 2.1 HTML Structure (`index.html`)
-The HTML will serve as the container for the game canvas and UI overlays.
-- **Container**: `#game-container` (Relative positioning context)
-- **Canvas**: `<canvas id="game-canvas">` (Where the game renders)
-- **UI Layer**: `#ui-layer` (Absolute positioning over canvas)
-    - **Start Screen**: `#start-screen` (Title, Instructions)
-    - **Score**: `#score-display` (Live score during gameplay)
-    - **Game Over**: `#game-over-screen` (Final score, Restart button)
+**Output:** Single HTML file (or separate files if preferred) containing the complete game logic.
 
-### 2.2 CSS Styling (`css/style.css`)
-- **Layout**: Flexbox for centering the game container on the page.
-- **Game Container**: Fixed dimensions (e.g., 320px x 480px) to mimic mobile aspect ratio.
-- **Typography**: Simple, readable fonts.
-- **States**: Utility classes like `.hidden` to toggle UI screens.
-- **Colors**: CSS variables for easy theming (sky blue background, green pipes).
+---
 
-### 2.3 JavaScript Logic (`js/app.js`)
-The game will run on a standard game loop using `requestAnimationFrame`.
+## 1. Architecture & Setup
 
-#### Core Modules/Objects:
-1.  **Game Loop**: Manages the timing and updates.
-2.  **Input Handler**: Listens for clicks/taps/spacebar to trigger "jump".
-3.  **Bird Entity**:
-    - Properties: `x`, `y`, `velocity`, `gravity`, `jumpStrength`.
-    - Methods: `update()`, `draw()`, `flap()`.
-4.  **Pipe Manager**:
-    - Manages an array of pipe objects.
-    - Spawns new pipes at intervals.
-    - Updates pipe positions.
-    - Removes off-screen pipes.
-5.  **Collision Detection**:
-    - Checks overlap between Bird rect and Pipe rects.
-    - Checks floor/ceiling collision.
-6.  **Game State Manager**:
-    - States: `READY`, `PLAYING`, `GAME_OVER`.
-    - Handles transitions (e.g., resetting variables on restart).
+### Pattern
+- Single Page Application (SPA) with a main `Game` class
 
-## 3. Step-by-Step Implementation Strategy
+### Loop
+- Use `requestAnimationFrame` for the game loop (Update → Draw)
 
-1.  **Setup**: Create files and basic HTML boilerplate.
-2.  **Rendering**: Set up the Canvas context and draw a static bird.
-3.  **Physics**: Implement gravity and the jump mechanic.
-4.  **Pipes**: Implement pipe spawning and movement logic.
-5.  **Collision**: Add collision detection to end the game.
-6.  **UI & Polish**: Add start/end screens and score counting.
+### Canvas
+- Full-screen responsive canvas
+- Handle high-DPI displays (Retina) by scaling the internal resolution vs CSS size
+
+### State Management
+- Simple state machine: `START`, `PLAYING`, `GAME_OVER`
+
+---
+
+## 2. Core Mechanics
+
+### Physics
+- Implement gravity (constant downward acceleration)
+- Implement flap (instant upward velocity)
+
+### Input
+- Bind Spacebar, Click, and TouchStart to the flap action
+
+### Object Pooling
+- **DO NOT** create/destroy obstacles
+- Create a fixed pool of 6 pipe pairs and recycle them when they exit the screen
+
+### Collision
+- Axis-Aligned Bounding Box (AABB)
+- Pixel-perfect is not needed, but hitboxes should be forgiving (slightly smaller than sprites)
+
+---
+
+## 3. The "Corporate" Twist (Crucial)
+
+### Obstacles
+- Pipes are office pillars
+- Attached to each pipe is a "signboard"
+
+### Text Rendering
+- When a pipe is recycled, pick a random string from the "Jargon List" and render it onto the signboard using `ctx.fillText`
+
+### Jargon List
+```javascript
+["Align Stakeholders", "Circle Back", "Urgent: EOD", "KPI Soup", "Optimize Funnel", 
+ "Low Budget", "Viral Content", "More Pop", "Feedback Round", "Do More w/ Less", 
+ "Brand Purpose", "Pivot to Pivot", "Q1 Reset"]
+```
+
+### Text Logic
+- Ensure text is centered and legible
+- If the string is too long, scale the font size down slightly to fit the signboard width
+
+---
+
+## 4. Asset Management & Visuals (The "Switcheroo" System)
+
+### Asset Manifest
+Create a constant dictionary `ASSETS` at the top of the file:
+
+```javascript
+const ASSETS = {
+    bird: { src: 'assets/bird.png', color: '#FFD700' }, // Gold fallback
+    pipe: { src: 'assets/pipe.png', color: '#2F4F4F' }, // Dark Slate Gray fallback
+    bg:   { src: 'assets/bg.png',   color: '#87CEEB' }  // Sky Blue fallback
+};
+```
+
+### Loader System
+- Implement a simple `AssetLoader` that preloads these images
+
+### Rendering Logic (Crucial)
+In your `draw()` methods (for Bird, Pipe, etc.), implement a fallback check:
+
+- **IF** the image is loaded and ready: Use `ctx.drawImage()`
+- **ELSE**: Use `ctx.fillStyle = ASSETS.key.color` and `ctx.fillRect()`
+
+**Benefit:** This allows the game to be playable immediately with colored rectangles (prototyping phase) and automatically switch to sprites once the files are added, without changing the code logic.
+
+---
+
+## 5. UI Overlay
+
+### Start
+- Message: "Happy New Year! Ready to clear 2026?"
+- Button: "Start"
+
+### HUD
+- Current Score (top center)
+
+### Game Over
+- Message: "You cleared {score} challenges."
+- Button: "Play Again"
+
+---
+
+## 6. Mobile Responsiveness
+
+- Prevent default touch behaviors (scrolling/zooming) on the canvas
+- Ensure the game scales correctly on portrait and landscape modes
+
+---
+
+## Deliverable
+
+Start by writing:
+1. The `index.html` structure
+2. The core `game.js` logic that handles:
+   - The game loop
+   - Player physics
+   - Basic pipe rendering with the fallback system

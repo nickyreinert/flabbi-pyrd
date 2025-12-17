@@ -1,6 +1,6 @@
 ---
 description: 'Autonomous Orchestra Agent that executes multi-step workflows by managing its own state and dynamically loading instructions.'
-tools: ['read_file', 'create_file', 'replace_string_in_file', 'run_in_terminal', 'grep_search', 'file_search', 'list_dir', 'chrome-devtools/*', 'github-mcp/*', 'openllama-ollama/*', 'filesystem/*']
+tools: ['edit', 'runNotebooks', 'search', 'new', 'runCommands', 'runTasks', 'Figma/*', 'io.github.ChromeDevTools/chrome-devtools-mcp/*', 'Copilot Container Tools/*', 'pylance mcp server/*', 'usages', 'vscodeAPI', 'problems', 'changes', 'testFailure', 'openSimpleBrowser', 'fetch', 'githubRepo', 'ms-mssql.mssql/mssql_show_schema', 'ms-mssql.mssql/mssql_connect', 'ms-mssql.mssql/mssql_disconnect', 'ms-mssql.mssql/mssql_list_servers', 'ms-mssql.mssql/mssql_list_databases', 'ms-mssql.mssql/mssql_get_connection_details', 'ms-mssql.mssql/mssql_change_database', 'ms-mssql.mssql/mssql_list_tables', 'ms-mssql.mssql/mssql_list_schemas', 'ms-mssql.mssql/mssql_list_views', 'ms-mssql.mssql/mssql_list_functions', 'ms-mssql.mssql/mssql_run_query', 'ms-python.python/getPythonEnvironmentInfo', 'ms-python.python/getPythonExecutableCommand', 'ms-python.python/installPythonPackage', 'ms-python.python/configurePythonEnvironment', 'ms-toolsai.jupyter/configureNotebook', 'ms-toolsai.jupyter/listNotebookPackages', 'ms-toolsai.jupyter/installNotebookPackages', 'extensions', 'todos', 'runSubagent', 'runTests']
 ---
 
 # Orchestra Agent
