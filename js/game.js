@@ -40,11 +40,11 @@ const CONFIG = {
     FLAP_POWER: -8,
     BIRD_SIZE: 40,
     PIPE_WIDTH: 80,
-    PIPE_GAP_START: 500,
-    PIPE_GAP_END: 180,
+    PIPE_GAP_START: 0.5,
+    PIPE_GAP_END: 0.2,
     PIPE_SPEED: 2.5,
     PIPE_POOL_SIZE: 6,
-    PIPE_SPACING: 600,
+    PIPE_SPACING: 0.6,
     SIGNBOARD_HEIGHT: 50,
     SIGNBOARD_OFFSET: 20,
     PROJECTILE_SPEED: 10,
@@ -643,6 +643,19 @@ class Game {
         // Store logical dimensions
         this.logicalWidth = rect.width;
         this.logicalHeight = rect.height;
+
+        // Re-initialize pipes if they exist (handle resize)
+        if (this.pipes && this.pipes.length > 0 && this.state === GAME_STATE.START) {
+             const initialGap = CONFIG.PIPE_GAP_START * this.logicalHeight;
+             const spacing = CONFIG.PIPE_SPACING * this.logicalWidth;
+             this.pipes.forEach((pipe, i) => {
+                pipe.reset(
+                    this.logicalWidth + i * spacing,
+                    this.logicalHeight,
+                    initialGap
+                );
+            });
+        }
     }
 
     setupEventListeners() {
@@ -773,8 +786,8 @@ class Game {
 
     applyCheats() {
         const newGravity = parseFloat(document.getElementById('sys_g').value);
-        const newGap = parseInt(document.getElementById('sys_gp').value);
-        const newSpacing = parseInt(document.getElementById('sys_sp').value);
+        const newGap = parseFloat(document.getElementById('sys_gp').value);
+        const newSpacing = parseFloat(document.getElementById('sys_sp').value);
         const cursorControl = document.getElementById('sys_cr').checked;
         const funMode = document.getElementById('sys_fn').checked;
 
@@ -816,10 +829,11 @@ class Game {
         this.frameCount = 0;
 
         // Reset pipes
-        const initialGap = CONFIG.PIPE_GAP_START;
+        const initialGap = CONFIG.PIPE_GAP_START * this.logicalHeight;
+        const spacing = CONFIG.PIPE_SPACING * this.logicalWidth;
         this.pipes.forEach((pipe, i) => {
             pipe.reset(
-                this.logicalWidth + i * CONFIG.PIPE_SPACING,
+                this.logicalWidth + i * spacing,
                 this.logicalHeight,
                 initialGap
             );
@@ -1023,13 +1037,17 @@ class Game {
                 );
                 
                 // Calculate dynamic gap
-                let nextGap = CONFIG.PIPE_GAP_START;
+                const gapStart = CONFIG.PIPE_GAP_START * this.logicalHeight;
+                const gapEnd = CONFIG.PIPE_GAP_END * this.logicalHeight;
+                const spacing = CONFIG.PIPE_SPACING * this.logicalWidth;
+
+                let nextGap = gapStart;
                 if (this.difficulty === 'normal') {
                     // Shrink gap based on score (e.g. -5px per point), capped at PIPE_GAP_END
-                    nextGap = Math.max(CONFIG.PIPE_GAP_END, CONFIG.PIPE_GAP_START - (this.score * 5));
+                    nextGap = Math.max(gapEnd, gapStart - (this.score * 5));
                 }
 
-                pipe.reset(lastPipe.x + CONFIG.PIPE_SPACING, this.logicalHeight, nextGap);
+                pipe.reset(lastPipe.x + spacing, this.logicalHeight, nextGap);
             }
 
             // Check collision
