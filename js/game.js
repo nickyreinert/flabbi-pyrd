@@ -3,7 +3,7 @@
 // ============================
 
 const ASSETS = {
-    bird: { src: 'assets/bird.png', color: '#FFD700' }, // Gold fallback
+    bird: { src: 'assets/bird.svg', color: '#FFD700' }, // Gold fallback
     pipe: { src: 'assets/pipe.png', color: '#2F4F4F' }, // Dark Slate Gray fallback
     bg:   { src: 'assets/bg.svg',   color: '#87CEEB' },  // Sky Blue fallback
     pacman: { src: 'assets/pacman.png', color: '#FFFF00' },
