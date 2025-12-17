@@ -7,3 +7,11 @@ services:
     volumes:
       - .:/usr/share/nginx/html
     restart: unless-stopped
+    networks:
+      - httpserver_default
+
+networks:
+  httpserver_default:
+    external: true
+
+
