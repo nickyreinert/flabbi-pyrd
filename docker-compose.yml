@@ -1,7 +1,7 @@
 services:
-  flabbi-byrd:
+  flabbi-pyrd:
     build: .
-    container_name: flabbi-byrd
+    container_name: flabbi-pyrd
     ports:
       - "8080:80"
     volumes:
