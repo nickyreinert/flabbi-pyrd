@@ -40,10 +40,11 @@ const CONFIG = {
     FLAP_POWER: -8,
     BIRD_SIZE: 40,
     PIPE_WIDTH: 80,
-    PIPE_GAP: 180,
+    PIPE_GAP_START: 500,
+    PIPE_GAP_END: 180,
     PIPE_SPEED: 2.5,
     PIPE_POOL_SIZE: 6,
-    PIPE_SPACING: 300,
+    PIPE_SPACING: 600,
     SIGNBOARD_HEIGHT: 50,
     SIGNBOARD_OFFSET: 20,
     PROJECTILE_SPEED: 10,
@@ -104,6 +105,11 @@ class AudioController {
 
     explosion() {
         this.playTone(100, 'sawtooth', 0.2, 0.2);
+    }
+
+    collect() {
+        this.playTone(1200, 'sine', 0.1, 0.1);
+        setTimeout(() => this.playTone(1500, 'sine', 0.2, 0.1), 100);
     }
 }
 
@@ -173,6 +179,58 @@ class Projectile {
             ctx.fillStyle = ASSETS.projectile.color;
             ctx.fillRect(this.x, this.y, this.width, this.height);
         }
+    }
+
+    getBounds() {
+        return { x: this.x, y: this.y, width: this.width, height: this.height };
+    }
+}
+
+// ============================
+// COLLECTIBLE CLASS
+// ============================
+
+class Collectible {
+    constructor(canvasWidth, canvasHeight) {
+        this.x = canvasWidth;
+        this.y = Math.random() * (canvasHeight - 200) + 100;
+        this.width = 40;
+        this.height = 40;
+        this.markedForDeletion = false;
+        this.text = "ACTIONABLE INSIGHT";
+        this.oscillation = 0;
+    }
+
+    update() {
+        this.x -= CONFIG.PIPE_SPEED;
+        this.oscillation += 0.1;
+        this.y += Math.sin(this.oscillation) * 2; // Float up and down
+        
+        if (this.x + this.width < 0) {
+            this.markedForDeletion = true;
+        }
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x + this.width/2, this.y + this.height/2);
+        
+        // Draw Golden Glow
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = "#FFD700";
+        
+        // Draw Box
+        ctx.fillStyle = "#FFD700";
+        ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
+        
+        // Draw Text (Floating above)
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "#FFD700";
+        ctx.font = "bold 12px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("INSIGHT", 0, -this.height/2 - 10);
+        
+        ctx.restore();
     }
 
     getBounds() {
@@ -521,8 +579,15 @@ class Game {
         this.pipes = [];
         this.projectiles = [];
         this.enemies = [];
+        this.collectibles = [];
         this.frameCount = 0;
         
+        this.achievements = {
+            5: { unlocked: false, msg: "Baseline Established." },
+            10: { unlocked: false, msg: "Stakeholders Impressed." },
+            20: { unlocked: false, msg: "You’re Basically a Case Study." }
+        };
+
         // Create pipe pool
         for (let i = 0; i < CONFIG.PIPE_POOL_SIZE; i++) {
             this.pipes.push(new Pipe());
@@ -570,6 +635,9 @@ class Game {
         // Restart button
         document.getElementById('restartBtn').addEventListener('click', () => this.startGame('restart'));
         
+        // Share button
+        document.getElementById('shareBtn').addEventListener('click', () => this.shareResult());
+
         // Flap controls
         const flapHandler = (e) => {
             if (this.state === GAME_STATE.PLAYING) {
@@ -711,6 +779,9 @@ class Game {
         this.state = GAME_STATE.PLAYING;
         this.score = 0;
         
+        // Reset Achievements
+        Object.keys(this.achievements).forEach(k => this.achievements[k].unlocked = false);
+
         // Set difficulty
         const selectorName = `difficulty_${source}`;
         const mode = document.querySelector(`input[name="${selectorName}"]:checked`).value;
@@ -722,6 +793,7 @@ class Game {
         // Reset entities
         this.projectiles = [];
         this.enemies = [];
+        this.collectibles = [];
         this.frameCount = 0;
 
         // Reset pipes
@@ -748,7 +820,45 @@ class Game {
         // Update UI
         document.getElementById('hud').classList.add('hidden');
         document.getElementById('gameOverScreen').classList.remove('hidden');
-        document.getElementById('finalScore').textContent = `You cleared ${this.score} challenges.`;
+        document.getElementById('gameOverMessage').textContent = `You cleared ${this.score} challenges. Let’s make 2026 ridiculously good.`;
+    }
+
+    shareResult() {
+        const text = `I cleared ${this.score} challenges in Flappy Corp! Can you beat my 2026 readiness score? #FlappyCorp`;
+        if (navigator.share) {
+            navigator.share({
+                title: 'Flappy Corp',
+                text: text,
+                url: window.location.href
+            }).catch(console.error);
+        } else {
+            navigator.clipboard.writeText(text).then(() => {
+                this.showToast("Result copied to clipboard!");
+            }).catch(() => {
+                this.showToast("Failed to copy result.");
+            });
+        }
+    }
+
+    showToast(msg) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = msg;
+        container.appendChild(toast);
+        
+        // Remove after animation (3s total: 0.5 in + 2 wait + 0.5 out)
+        setTimeout(() => {
+            if (toast.parentElement) toast.remove();
+        }, 3000);
+    }
+
+    checkAchievements() {
+        if (this.achievements[this.score] && !this.achievements[this.score].unlocked) {
+            this.achievements[this.score].unlocked = true;
+            this.showToast(this.achievements[this.score].msg);
+            this.audio.score(); // Extra ding
+        }
     }
 
     update() {
@@ -764,6 +874,14 @@ class Game {
 
         // Update bird
         this.bird.update();
+
+        // Check Achievements
+        this.checkAchievements();
+
+        // Spawn Collectibles (Rare: 1% chance every 60 frames)
+        if (this.frameCount % 60 === 0 && Math.random() < 0.05) {
+            this.collectibles.push(new Collectible(this.logicalWidth, this.logicalHeight));
+        }
 
         // Spawn Enemies (Fun Mode)
         if (this.bird.funMode && this.frameCount % CONFIG.ENEMY_SPAWN_RATE === 0) {
@@ -783,6 +901,23 @@ class Game {
             enemy.update();
             if (enemy.markedForDeletion) {
                 this.enemies.splice(index, 1);
+            }
+        });
+
+        // Update Collectibles
+        this.collectibles.forEach((item, index) => {
+            item.update();
+            if (item.markedForDeletion) {
+                this.collectibles.splice(index, 1);
+            }
+            
+            // Check Collision
+            if (this.checkRectCollision(this.bird.getBounds(), item.getBounds())) {
+                item.markedForDeletion = true;
+                this.score += 3;
+                document.getElementById('score').textContent = this.score;
+                this.audio.collect();
+                this.showToast("ACTIONABLE INSIGHT! (+3)");
             }
         });
 
@@ -914,6 +1049,11 @@ class Game {
         // Draw Enemies
         this.enemies.forEach(enemy => {
             enemy.draw(this.ctx, this.assetLoader);
+        });
+
+        // Draw Collectibles
+        this.collectibles.forEach(item => {
+            item.draw(this.ctx);
         });
 
         // Draw Projectiles

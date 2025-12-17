@@ -6,6 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Flappy Corp - Corporate Survival 2026</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/toast.css">
 </head>
 <body>
     <div id="game-container">
@@ -14,7 +15,7 @@
         <!-- Start Screen -->
         <div id="startScreen" class="overlay">
             <h1>Flappy Corp</h1>
-            <p class="subtitle">Happy New Year! Ready to clear 2026?</p>
+            <p class="subtitle">Happy New Year — Ready to clear 2026?</p>
             
             <div class="difficulty-selector">
                 <label class="radio-label">
@@ -36,9 +37,10 @@
         </div>
         
         <!-- Game Over Screen -->
+                <!-- Game Over Screen -->
         <div id="gameOverScreen" class="overlay hidden">
             <h2>Game Over</h2>
-            <p id="finalScore">You cleared 0 challenges.</p>
+            <p id="gameOverMessage">You cleared 0 challenges.</p>
             
             <div class="difficulty-selector">
                 <label class="radio-label">
@@ -51,8 +53,16 @@
                 </label>
             </div>
 
-            <button id="restartBtn" class="btn">Play Again</button>
+            <div class="button-group">
+                <button id="restartBtn" class="btn">Play Again</button>
+                <button id="shareBtn" class="btn secondary">Share</button>
+            </div>
         </div>
+
+        <!-- Toast Container -->
+        <div id="toast-container"></div>
+        
+        <!-- System Config (Cheat Menu) -->
 
         <!-- System Configuration -->
         <div id="sysConfig" class="overlay hidden"><h2>congratz' nerdy fren</h2><div class="sys-params"><div class="param-row"><label>G-Force: <span id="disp_g"></span></label><input type="range" id="sys_g" min="0.1" max="1.0" step="0.1"></div><div class="param-row"><label>V-Gap: <span id="disp_gp"></span></label><input type="range" id="sys_gp" min="100" max="400" step="10"></div><div class="param-row"><label>H-Space: <span id="disp_sp"></span></label><input type="range" id="sys_sp" min="200" max="600" step="10"></div><div class="param-row" style="flex-direction:row;align-items:center;gap:1rem;"><input type="checkbox" id="sys_cr" style="width:20px;height:20px;"><label for="sys_cr" style="margin-bottom:0;cursor:pointer;">Input Override A</label></div><div class="param-row" style="flex-direction:row;align-items:center;gap:1rem;"><input type="checkbox" id="sys_fn" style="width:20px;height:20px;"><label for="sys_fn" style="margin-bottom:0;cursor:pointer;">Input Override B</label></div></div><div class="sys-actions"><button id="sys_ok" class="btn" style="background:#28a745;">OK</button><button id="sys_cl" class="btn" style="background:#6c757d;">X</button></div></div>
