@@ -400,7 +400,7 @@ class Pipe {
 
     reset(x, canvasHeight, gap) {
         this.x = x;
-        this.gap = gap || CONFIG.PIPE_GAP_START;
+        this.gap = gap;
         const minHeight = 50;
         // Ensure we have enough space for the gap
         const safeGap = Math.min(this.gap, canvasHeight - 100);
@@ -687,6 +687,14 @@ class Game {
                     e.preventDefault();
                     this.bird.velocity = 5;
                 }
+                if (e.code === 'ArrowRight') {
+                    e.preventDefault();
+                    this.adjustGameSpeed(1.1); // Speed up by 10%
+                }
+                if (e.code === 'ArrowLeft') {
+                    e.preventDefault();
+                    this.adjustGameSpeed(0.9); // Slow down by 10%
+                }
             } else if (e.code === 'Space') {
                 flapHandler(e);
             }
@@ -748,6 +756,18 @@ class Game {
         });
     }
 
+    adjustGameSpeed(factor) {
+        CONFIG.PIPE_SPEED *= factor;
+        CONFIG.ENEMY_SPEED *= factor;
+        CONFIG.PROJECTILE_SPEED *= factor;
+        this.bgSpeed *= factor;
+
+        // Update existing enemies velocity
+        this.enemies.forEach(enemy => {
+            enemy.vx *= factor;
+        });
+    }
+
     toggleCheatModal() {
         const modal = document.getElementById('sysConfig');
         const isHidden = modal.classList.contains('hidden');
@@ -785,9 +805,14 @@ class Game {
     }
 
     applyCheats() {
-        const newGravity = parseFloat(document.getElementById('sys_g').value);
-        const newGap = parseFloat(document.getElementById('sys_gp').value);
-        const newSpacing = parseFloat(document.getElementById('sys_sp').value);
+        const rawGravity = parseFloat(document.getElementById('sys_g').value);
+        const rawGap = parseFloat(document.getElementById('sys_gp').value);
+        const rawSpacing = parseFloat(document.getElementById('sys_sp').value);
+        
+        const newGravity = isNaN(rawGravity) ? CONFIG.GRAVITY_NORMAL : rawGravity;
+        const newGap = isNaN(rawGap) ? CONFIG.PIPE_GAP_END : rawGap;
+        const newSpacing = isNaN(rawSpacing) ? CONFIG.PIPE_SPACING : rawSpacing;
+
         const cursorControl = document.getElementById('sys_cr').checked;
         const funMode = document.getElementById('sys_fn').checked;
 
@@ -810,6 +835,12 @@ class Game {
         this.state = GAME_STATE.PLAYING;
         this.score = 0;
         
+        // Reset Speeds (in case they were modified by cheats)
+        CONFIG.PIPE_SPEED = 2.5;
+        CONFIG.ENEMY_SPEED = 3;
+        CONFIG.PROJECTILE_SPEED = 10;
+        this.bgSpeed = 1;
+
         // Reset Achievements
         Object.keys(this.achievements).forEach(k => this.achievements[k].unlocked = false);
 
@@ -957,10 +988,12 @@ class Game {
         });
 
         // Update Collectibles
-        this.collectibles.forEach((item, index) => {
+        for (let i = this.collectibles.length - 1; i >= 0; i--) {
+            const item = this.collectibles[i];
             item.update();
             if (item.markedForDeletion) {
-                this.collectibles.splice(index, 1);
+                this.collectibles.splice(i, 1);
+                continue;
             }
             
             // Check Collision
@@ -971,7 +1004,7 @@ class Game {
                 this.audio.collect();
                 this.showToast("ACTIONABLE INSIGHT! (+3)");
             }
-        });
+        }
 
         // Check Projectile Collisions
         this.projectiles.forEach((proj, pIndex) => {
@@ -1047,7 +1080,13 @@ class Game {
                     nextGap = Math.max(gapEnd, gapStart - (this.score * 5));
                 }
 
-                pipe.reset(lastPipe.x + spacing, this.logicalHeight, nextGap);
+                // Safety check for NaN
+                let nextX = lastPipe.x + spacing;
+                if (isNaN(nextX)) {
+                    nextX = this.logicalWidth + spacing;
+                }
+
+                pipe.reset(nextX, this.logicalHeight, nextGap);
             }
 
             // Check collision
