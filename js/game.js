@@ -402,12 +402,19 @@ class Pipe {
         this.x = x;
         this.gap = gap;
         const minHeight = 50;
-        // Ensure we have enough space for the gap
-        const safeGap = Math.min(this.gap, canvasHeight - 100);
-        const maxHeight = canvasHeight - safeGap - 50;
         
-        this.topHeight = Math.random() * (maxHeight - minHeight) + minHeight;
+        // Ensure we have enough space for the gap
+        // Clamp gap to be at most canvasHeight - 100 (leaving 50px for top and bottom pipes)
+        const safeGap = Math.max(50, Math.min(this.gap, canvasHeight - 100));
+        
+        const maxHeight = canvasHeight - safeGap - minHeight;
+        
+        // Ensure maxHeight is at least minHeight
+        const safeMaxHeight = Math.max(minHeight, maxHeight);
+
+        this.topHeight = Math.random() * (safeMaxHeight - minHeight) + minHeight;
         this.bottomY = this.topHeight + safeGap;
+        
         this.passed = false;
         this.jargon = JARGON_LIST[Math.floor(Math.random() * JARGON_LIST.length)];
     }
@@ -809,16 +816,17 @@ class Game {
         const rawGap = parseFloat(document.getElementById('sys_gp').value);
         const rawSpacing = parseFloat(document.getElementById('sys_sp').value);
         
-        const newGravity = isNaN(rawGravity) ? CONFIG.GRAVITY_NORMAL : rawGravity;
-        const newGap = isNaN(rawGap) ? CONFIG.PIPE_GAP_END : rawGap;
-        const newSpacing = isNaN(rawSpacing) ? CONFIG.PIPE_SPACING : rawSpacing;
+        // Validate and enforce minimums
+        const newGravity = (isNaN(rawGravity) || rawGravity < 0) ? CONFIG.GRAVITY_NORMAL : rawGravity;
+        const newGap = (isNaN(rawGap) || rawGap < 0.05) ? 0.2 : rawGap; // Min 5% gap
+        const newSpacing = (isNaN(rawSpacing) || rawSpacing < 0.2) ? 0.6 : rawSpacing; // Min 20% spacing
 
         const cursorControl = document.getElementById('sys_cr').checked;
         const funMode = document.getElementById('sys_fn').checked;
 
         // Apply to Config
-        CONFIG.GRAVITY_NORMAL = newGravity; // Update base config
-        CONFIG.PIPE_GAP_END = newGap; // Update the target gap
+        CONFIG.GRAVITY_NORMAL = newGravity;
+        CONFIG.PIPE_GAP_END = newGap;
         CONFIG.PIPE_SPACING = newSpacing;
 
         // Apply immediately to current game state
