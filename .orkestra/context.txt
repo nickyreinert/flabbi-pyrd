@@ -1,0 +1,8 @@
+# index.html
+$(cat index.html)
+
+# js/game.js
+$(cat js/game.js)
+
+# css/style.css
+$(cat css/style.css)

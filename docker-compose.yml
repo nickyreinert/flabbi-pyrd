@@ -1,7 +1,7 @@
 services:
-  flappy-corp:
+  flabbi-byrd:
     build: .
-    container_name: flappy-corp
+    container_name: flabbi-byrd
     ports:
       - "8080:80"
     volumes:
