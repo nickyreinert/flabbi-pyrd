@@ -261,16 +261,18 @@ class Enemy {
         this.height = 30;
         this.type = Math.random() > 0.5 ? 'SHOOTABLE' : 'EATABLE';
         this.markedForDeletion = false;
-        this.speed = CONFIG.ENEMY_SPEED + Math.random();
-        this.angle = 0;
+        
+        // Physics
+        const speed = CONFIG.ENEMY_SPEED + Math.random();
+        this.vx = -speed;
+        this.vy = (Math.random() - 0.5) * 5; // Random vertical velocity
     }
 
     update() {
-        this.x -= this.speed;
-        this.angle += 0.1;
-        this.y += Math.sin(this.angle) * 2; // Wavy movement
+        this.x += this.vx;
+        this.y += this.vy;
 
-        if (this.x + this.width < 0) this.markedForDeletion = true;
+        if (this.x + this.width < 0 || this.x > 3000) this.markedForDeletion = true;
     }
 
     draw(ctx, assetLoader) {
@@ -918,6 +920,23 @@ class Game {
         // Update Enemies
         this.enemies.forEach((enemy, index) => {
             enemy.update();
+
+            // Bounce off floor/ceiling
+            if (enemy.y <= 0 || enemy.y + enemy.height >= this.logicalHeight) {
+                enemy.vy *= -1;
+            }
+
+            // Bounce off pipes
+            this.pipes.forEach(pipe => {
+                const bounds = pipe.getBounds();
+                if (this.checkRectCollision(enemy.getBounds(), bounds.top)) {
+                    this.resolveEnemyCollision(enemy, bounds.top);
+                }
+                if (this.checkRectCollision(enemy.getBounds(), bounds.bottom)) {
+                    this.resolveEnemyCollision(enemy, bounds.bottom);
+                }
+            });
+
             if (enemy.markedForDeletion) {
                 this.enemies.splice(index, 1);
             }
@@ -1038,6 +1057,33 @@ class Game {
         const hitBottom = this.checkRectCollision(birdBounds, pipeBounds.bottom);
 
         return hitTop || hitBottom;
+    }
+
+    resolveEnemyCollision(enemy, rect) {
+        // Calculate overlaps
+        const enemyCenter = { x: enemy.x + enemy.width/2, y: enemy.y + enemy.height/2 };
+        const rectCenter = { x: rect.x + rect.width/2, y: rect.y + rect.height/2 };
+        
+        const dx = enemyCenter.x - rectCenter.x;
+        const dy = enemyCenter.y - rectCenter.y;
+        
+        const combinedHalfWidth = (enemy.width + rect.width) / 2;
+        const combinedHalfHeight = (enemy.height + rect.height) / 2;
+        
+        const overlapX = combinedHalfWidth - Math.abs(dx);
+        const overlapY = combinedHalfHeight - Math.abs(dy);
+        
+        if (overlapX < overlapY) {
+            // Horizontal collision
+            enemy.vx = -enemy.vx;
+            // Push out
+            if (dx > 0) enemy.x += overlapX; else enemy.x -= overlapX;
+        } else {
+            // Vertical collision
+            enemy.vy = -enemy.vy;
+            // Push out
+            if (dy > 0) enemy.y += overlapY; else enemy.y -= overlapY;
+        }
     }
 
     draw() {
