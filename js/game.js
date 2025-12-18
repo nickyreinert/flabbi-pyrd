@@ -70,15 +70,37 @@ class Game {
         this.logicalWidth = rect.width;
         this.logicalHeight = rect.height;
 
+        // --- Responsive Adjustments ---
+        const isMobile = this.logicalWidth < 600;
+        
+        // 1. Pipe Width
+        CONFIG.PIPE_WIDTH = isMobile ? 50 : 80; // Narrower on mobile
+
+        // 2. Spacing (Horizontal)
+        // We want a minimum clear space between pipes.
+        const minClearSpace = 200; 
+        // Spacing = PipeWidth + ClearSpace
+        const minSpacing = CONFIG.PIPE_WIDTH + minClearSpace;
+        
+        // Target spacing as ratio
+        const targetRatio = isMobile ? 0.7 : 0.35; // Higher ratio on mobile to spread them out
+        
+        this.pipeSpacing = Math.max(minSpacing, this.logicalWidth * targetRatio);
+
+        // 3. Gap (Vertical)
+        const minGap = 160;
+        const targetGap = this.logicalHeight * CONFIG.PIPE_GAP_START;
+        this.pipeGapStart = Math.max(minGap, targetGap);
+
         // Re-initialize pipes if they exist (handle resize)
         if (this.pipes && this.pipes.length > 0 && this.state === GAME_STATE.START) {
-             const initialGap = CONFIG.PIPE_GAP_START * this.logicalHeight;
-             const spacing = CONFIG.PIPE_SPACING * this.logicalWidth;
              this.pipes.forEach((pipe, i) => {
+                pipe.width = CONFIG.PIPE_WIDTH; // Update width
                 pipe.reset(
-                    this.logicalWidth + i * spacing,
+                    this.logicalWidth + i * this.pipeSpacing,
                     this.logicalHeight,
-                    initialGap
+                    this.pipeGapStart,
+                    pipe.jargon
                 );
             });
         }
@@ -308,14 +330,12 @@ class Game {
         // Reset pipes
         this.jargonQueue = [...JARGON_LIST].sort(() => Math.random() - 0.5);
         
-        const initialGap = CONFIG.PIPE_GAP_START * this.logicalHeight;
-        const spacing = CONFIG.PIPE_SPACING * this.logicalWidth;
         this.pipes.forEach((pipe, i) => {
             const jargon = this.jargonQueue.pop() || "Bonus";
             pipe.reset(
-                this.logicalWidth + i * spacing,
+                this.logicalWidth + i * this.pipeSpacing,
                 this.logicalHeight,
-                initialGap,
+                this.pipeGapStart,
                 jargon
             );
         });
@@ -627,17 +647,15 @@ class Game {
                 );
                 
                 // Calculate dynamic gap
-                const gapStart = CONFIG.PIPE_GAP_START * this.logicalHeight;
                 const gapEnd = CONFIG.PIPE_GAP_END * this.logicalHeight;
-                const spacing = CONFIG.PIPE_SPACING * this.logicalWidth;
 
                 // Shrink gap based on score (e.g. -5px per point), capped at PIPE_GAP_END
-                let nextGap = Math.max(gapEnd, gapStart - (this.score * 5));
+                let nextGap = Math.max(gapEnd, this.pipeGapStart - (this.score * 5));
 
                 // Safety check for NaN
-                let nextX = lastPipe.x + spacing;
+                let nextX = lastPipe.x + this.pipeSpacing;
                 if (isNaN(nextX)) {
-                    nextX = this.logicalWidth + spacing;
+                    nextX = this.logicalWidth + this.pipeSpacing;
                 }
 
                 const jargon = this.jargonQueue.pop();
