@@ -33,6 +33,7 @@ class Pipe {
         this.bottomY = this.topHeight + safeGap;
         
         this.passed = false;
+        this.signRotation = (Math.random() * 0.2) - 0.1; // Random skew between -0.1 and 0.1 radians
     }
 
     update() {
@@ -72,45 +73,68 @@ class Pipe {
             ctx.fillRect(this.x, this.bottomY, this.width, canvasHeight - this.bottomY);
         }
 
-        // Draw Jargon on the longer pipe segment
+        // Draw Jargon Sign on the longer pipe segment
         const bottomHeight = canvasHeight - this.bottomY;
         if (this.topHeight > bottomHeight) {
-            this.drawVerticalJargon(ctx, this.x, 0, this.topHeight);
+            this.drawSign(ctx, this.x, 0, this.topHeight);
         } else {
-            this.drawVerticalJargon(ctx, this.x, this.bottomY, bottomHeight);
+            this.drawSign(ctx, this.x, this.bottomY, bottomHeight);
         }
     }
 
-    drawVerticalJargon(ctx, x, y, height) {
+    drawSign(ctx, x, y, height) {
         ctx.save();
         // Center of the pipe segment
         ctx.translate(x + this.width / 2, y + height / 2);
-        ctx.rotate(-Math.PI / 2); // Text runs bottom-to-top
+        
+        // Apply random skew/rotation
+        ctx.rotate(this.signRotation);
 
-        ctx.fillStyle = '#FFFFFF';
+        // Sign style
+        const fontSize = 24;
+        ctx.font = `bold ${fontSize}px Arial`;
+        const textMetrics = ctx.measureText(this.jargon);
+        const paddingX = 20;
+        const paddingY = 15;
+        const signWidth = textMetrics.width + (paddingX * 2);
+        const signHeight = fontSize + (paddingY * 2);
+
+        // Draw Sign Board (White background with border)
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#333333';
+        ctx.lineWidth = 2;
+        
+        // Draw a rounded rectangle for the sign
+        this.roundRect(ctx, -signWidth / 2, -signHeight / 2, signWidth, signHeight, 5);
+        ctx.fill();
+        ctx.stroke();
+
+        // Draw "Bolts"
+        ctx.fillStyle = '#999';
+        ctx.beginPath();
+        ctx.arc(-signWidth/2 + 8, 0, 3, 0, Math.PI * 2);
+        ctx.arc(signWidth/2 - 8, 0, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw Text
+        ctx.fillStyle = '#000000';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        
-        // Dynamic font sizing to fit height
-        let fontSize = 20;
-        ctx.font = `bold ${fontSize}px Arial`;
-        let textWidth = ctx.measureText(this.jargon).width;
-        
-        // Fit text within pipe height (minus padding)
-        const maxTextWidth = height - 20;
-        while (textWidth > maxTextWidth && fontSize > 10) {
-            fontSize--;
-            ctx.font = `bold ${fontSize}px Arial`;
-            textWidth = ctx.measureText(this.jargon).width;
-        }
-
-        // Draw text with outline
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 3;
-        ctx.strokeText(this.jargon, 0, 0);
         ctx.fillText(this.jargon, 0, 0);
 
         ctx.restore();
+    }
+
+    roundRect(ctx, x, y, w, h, r) {
+        if (w < 2 * r) r = w / 2;
+        if (h < 2 * r) r = h / 2;
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
     }
 
     getBounds() {

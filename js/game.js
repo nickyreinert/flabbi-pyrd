@@ -25,9 +25,9 @@ class Game {
         this.frameCount = 0;
         
         this.achievements = {
-            5: { unlocked: false, msg: "Baseline Established." },
-            10: { unlocked: false, msg: "Stakeholders Impressed." },
-            20: { unlocked: false, msg: "You’re Basically a Case Study." }
+            5: { unlocked: false, msg: "Baseline Established.", sharing_msg: "I established my baseline readiness score of 5 challenges in Flappy Corp!" },
+            10: { unlocked: false, msg: "Stakeholders Impressed.", sharing_msg: "I impressed my stakeholders by clearing 10 challenges in Flappy Corp!" },
+            20: { unlocked: false, msg: "You’re Basically a Case Study.", sharing_msg: "I’m basically a case study with 20 challenges cleared in Flappy Corp!"}
         };
 
         // Create pipe pool
@@ -347,7 +347,7 @@ class Game {
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         
-        const line1 = `I reached ${this.score}`;
+        const line1 = `I accomplished ${this.score} challenges`;
         const line2 = "in Flappy Corp!";
         const x = this.logicalWidth / 2;
         const y = this.logicalHeight / 2;
