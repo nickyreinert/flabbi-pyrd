@@ -37,7 +37,6 @@ const GAME_STATE = {
 
 const CONFIG = {
     GRAVITY_NORMAL: 0.5,
-    GRAVITY_SIMPLE: 0.3,
     FLAP_POWER: -8,
     BIRD_SIZE: 40,
     PIPE_WIDTH: 80,

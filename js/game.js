@@ -274,10 +274,7 @@ class Game {
         Object.keys(this.achievements).forEach(k => this.achievements[k].unlocked = false);
 
         // Set difficulty
-        const selectorName = `difficulty_${source}`;
-        const mode = document.querySelector(`input[name="${selectorName}"]:checked`).value;
-        this.difficulty = mode;
-        this.bird.gravity = mode === 'simple' ? CONFIG.GRAVITY_SIMPLE : CONFIG.GRAVITY_NORMAL;
+        this.bird.gravity = CONFIG.GRAVITY_NORMAL;
 
         // Reset bird
         this.bird.reset(100, this.logicalHeight / 2);
@@ -518,11 +515,8 @@ class Game {
                 const gapEnd = CONFIG.PIPE_GAP_END * this.logicalHeight;
                 const spacing = CONFIG.PIPE_SPACING * this.logicalWidth;
 
-                let nextGap = gapStart;
-                if (this.difficulty === 'normal') {
-                    // Shrink gap based on score (e.g. -5px per point), capped at PIPE_GAP_END
-                    nextGap = Math.max(gapEnd, gapStart - (this.score * 5));
-                }
+                // Shrink gap based on score (e.g. -5px per point), capped at PIPE_GAP_END
+                let nextGap = Math.max(gapEnd, gapStart - (this.score * 5));
 
                 // Safety check for NaN
                 let nextX = lastPipe.x + spacing;
