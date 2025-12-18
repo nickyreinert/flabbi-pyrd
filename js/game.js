@@ -373,14 +373,56 @@ class Game {
         const dataUrl = this.canvas.toDataURL('image/png');
         document.getElementById('sharePreview').src = dataUrl;
         
+        // Check for Web Share API support
+        const nativeBtn = document.querySelector('.share-btn.native');
+        if (navigator.share && navigator.canShare) {
+             nativeBtn.style.display = 'flex';
+        } else {
+             nativeBtn.style.display = 'none';
+        }
+
         // Show Modal
         document.getElementById('shareModal').classList.remove('hidden');
     }
 
-    handleShare(platform) {
+    async handleShare(platform) {
         const text = `I cleared ${this.score} challenges in Flappy Corp! Can you beat my 2026 readiness score? #FlappyCorp`;
         const url = window.location.href;
         let shareUrl = '';
+
+        if (platform === 'download') {
+            const link = document.createElement('a');
+            link.download = 'flappy-corp-score.png';
+            link.href = this.canvas.toDataURL('image/png');
+            link.click();
+            return;
+        }
+
+        if (platform === 'native') {
+            try {
+                const dataUrl = this.canvas.toDataURL('image/png');
+                const blob = await (await fetch(dataUrl)).blob();
+                const file = new File([blob], 'flappy-corp-score.png', { type: 'image/png' });
+                
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        title: 'Flappy Corp Score',
+                        text: text,
+                        url: url,
+                        files: [file]
+                    });
+                } else {
+                    await navigator.share({
+                        title: 'Flappy Corp Score',
+                        text: text,
+                        url: url
+                    });
+                }
+            } catch (err) {
+                console.error('Share failed:', err);
+            }
+            return;
+        }
 
         switch(platform) {
             case 'linkedin':

@@ -25,8 +25,23 @@ const JARGON_LIST = [
     "Do More w/ Less", 
     "Brand Purpose", 
     "Pivot to Pivot", 
-    "Q1 Reset"
-];
+    "Q1 Reset",
+    "Take This Offline",
+    "Quick Win",
+    "High-Level Overview",
+    "Peel the Onion",
+    "Actionable Insights",
+    "Leverage Synergies",
+    "Scalable Solution",
+    "All Hands on Deck",
+    "Deep Dive",
+    "Low-Hanging Fruit",
+    "Bandwidth Check",
+    "North Star Metric",
+    "Thought Leadership",
+    "Scope Creep",
+    "Raise the Bar"
+    ];
 
 const GAME_STATE = {
     START: 'START',
