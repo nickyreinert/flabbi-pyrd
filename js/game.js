@@ -327,16 +327,29 @@ class Game {
         document.getElementById('score').textContent = '0';
     }
 
+    getBestAchievement() {
+        const levels = Object.keys(this.achievements).map(Number).sort((a, b) => b - a);
+        for (const level of levels) {
+            if (this.score >= level) {
+                return this.achievements[level];
+            }
+        }
+        return null;
+    }
+
     gameOver() {
         if (this.state !== GAME_STATE.GAME_OVER) {
             this.audio.hit();
         }
         this.state = GAME_STATE.GAME_OVER;
         
+        const achievement = this.getBestAchievement();
+        const msg = achievement ? `${achievement.msg} (${this.score} challenges)` : `You cleared ${this.score} challenges. Let’s make 2026 ridiculously good.`;
+
         // Update UI
         document.getElementById('hud').classList.add('hidden');
         document.getElementById('gameOverScreen').classList.remove('hidden');
-        document.getElementById('gameOverMessage').textContent = `You cleared ${this.score} challenges. Let’s make 2026 ridiculously good.`;
+        document.getElementById('gameOverMessage').textContent = msg;
     }
 
     gameWon() {
@@ -386,7 +399,9 @@ class Game {
     }
 
     async handleShare(platform) {
-        const text = `I cleared ${this.score} challenges in Flappy Corp! Can you beat my 2026 readiness score? #FlappyCorp`;
+        const achievement = this.getBestAchievement();
+        const baseText = achievement ? achievement.sharing_msg : `I cleared ${this.score} challenges in Flappy Corp! Can you beat my 2026 readiness score?`;
+        const text = `${baseText} #FlappyCorp`;
         const url = window.location.href;
         let shareUrl = '';
 
