@@ -27,20 +27,51 @@ class Collectible {
         ctx.save();
         ctx.translate(this.x + this.width/2, this.y + this.height/2);
         
-        // Draw Golden Glow
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = "#FFD700";
+        // Pulse effect for the shine
+        const pulse = 1 + Math.sin(this.oscillation * 3) * 0.2;
         
-        // Draw Box
-        ctx.fillStyle = "#FFD700";
-        ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
+        // Strong Glow
+        ctx.shadowBlur = 20 * pulse;
+        ctx.shadowColor = "#FFFF00";
         
-        // Draw Text (Floating above)
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = "#FFD700";
-        ctx.font = "bold 12px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText("INSIGHT", 0, -this.height/2 - 10);
+        // Bulb Glass (Circle)
+        ctx.fillStyle = "#FFFFE0"; // Light yellow
+        ctx.beginPath();
+        ctx.arc(0, -5, 15, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Bulb Base (Screw thread - simplified)
+        ctx.shadowBlur = 0; // Remove glow for the base
+        ctx.fillStyle = "#A9A9A9"; // Dark Gray
+        ctx.fillRect(-6, 8, 12, 8);
+        
+        // Thread details
+        ctx.strokeStyle = "#696969";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-6, 10);
+        ctx.lineTo(6, 10);
+        ctx.moveTo(-6, 13);
+        ctx.lineTo(6, 13);
+        ctx.stroke();
+
+        // Contact point
+        ctx.fillStyle = "#000";
+        ctx.beginPath();
+        ctx.arc(0, 18, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Filament (Glowing inside)
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = "#FF4500"; // Orange-red glow
+        ctx.strokeStyle = "#FF4500";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-5, -5);
+        ctx.lineTo(-2, 0);
+        ctx.lineTo(2, -5);
+        ctx.lineTo(5, 0);
+        ctx.stroke();
         
         ctx.restore();
     }

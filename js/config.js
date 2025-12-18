@@ -49,7 +49,8 @@ const CONFIG = {
     SIGNBOARD_OFFSET: 20,
     PROJECTILE_SPEED: 10,
     ENEMY_SPEED: 3,
-    ENEMY_SPAWN_RATE: 120 // Frames
+    ENEMY_SPAWN_RATE: 120, // Frames
+    COLLECTIBLE_SPAWN_CHANCE: 0.3 // 0.0 to 1.0 (Chance per second to spawn)
 };
 
 const AUDIO_CONFIG = {

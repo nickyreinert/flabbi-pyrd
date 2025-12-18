@@ -16,6 +16,7 @@ class Game {
         this.score = 0;
         this.bgX = 0;
         this.bgSpeed = 1; // Speed of background scrolling
+        this.paused = false;
         
         this.bird = new Bird(100, this.canvas.height / 2);
         this.pipes = [];
@@ -113,6 +114,15 @@ class Game {
         };
         
         window.addEventListener('keydown', (e) => {
+            // Handle Enter Key (Start / Pause)
+            if (e.code === 'Enter') {
+                if (this.state === GAME_STATE.START) {
+                    this.startGame('start');
+                } else if (this.state === GAME_STATE.PLAYING) {
+                    this.paused = !this.paused;
+                }
+            }
+
             if (this.bird.cursorControl) {
                 if (e.code === 'ArrowUp') {
                     e.preventDefault();
@@ -430,8 +440,9 @@ class Game {
         // Check Achievements
         this.checkAchievements();
 
-        // Spawn Collectibles (Rare: 1% chance every 60 frames)
-        if (this.frameCount % 60 === 0 && Math.random() < 0.05) {
+        // Spawn Collectibles
+        // Check once every 60 frames (approx 1 second)
+        if (this.frameCount % 60 === 0 && Math.random() < CONFIG.COLLECTIBLE_SPAWN_CHANCE) {
             this.collectibles.push(new Collectible(this.logicalWidth, this.logicalHeight));
         }
 
