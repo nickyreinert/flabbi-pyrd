@@ -338,6 +338,27 @@ class Game {
     }
 
     openShareModal() {
+        // Draw Score on Canvas for Screenshot
+        this.ctx.save();
+        this.ctx.fillStyle = 'white';
+        this.ctx.strokeStyle = 'black';
+        this.ctx.lineWidth = 8;
+        this.ctx.font = 'bold 60px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        
+        const line1 = `I reached ${this.score}`;
+        const line2 = "in Flappy Corp!";
+        const x = this.logicalWidth / 2;
+        const y = this.logicalHeight / 2;
+        
+        this.ctx.strokeText(line1, x, y - 35);
+        this.ctx.fillText(line1, x, y - 35);
+        
+        this.ctx.strokeText(line2, x, y + 35);
+        this.ctx.fillText(line2, x, y + 35);
+        this.ctx.restore();
+
         // Generate Screenshot
         const dataUrl = this.canvas.toDataURL('image/png');
         document.getElementById('sharePreview').src = dataUrl;

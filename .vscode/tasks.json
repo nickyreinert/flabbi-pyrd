@@ -42,6 +42,26 @@
 			],
 			"isBackground": false,
 			"group": "Orkestrate"
+		},
+		{
+			"label": "Orkestrate: Update State",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"echo '{\"current_step_index\": 1, \"previous_output\": {\"status\": \"refactored\"}}' > .orkestra/state.json"
+			],
+			"isBackground": false,
+			"group": "Orkestrate"
+		},
+		{
+			"label": "Orkestrate: Update State",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"echo '{\"current_step_index\": 1, \"previous_output\": {\"status\": \"refactored\"}}' > .orkestra/state.json"
+			],
+			"isBackground": false,
+			"group": "Orkestrate"
 		}
 	]
 }
