@@ -7,6 +7,7 @@
     <title>Flappy Corp - Corporate Survival 2026</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/toast.css">
+    <link rel="stylesheet" href="css/share.css">
 </head>
 <body>
     <div id="game-container">
@@ -34,6 +35,22 @@
             <div class="button-group">
                 <button id="restartBtn" class="btn">Play Again</button>
                 <button id="shareBtn" class="btn secondary">Share</button>
+            </div>
+        </div>
+
+        <!-- Share Modal -->
+        <div id="shareModal" class="overlay hidden">
+            <h2>Share Your Success</h2>
+            <div class="share-content">
+                <img id="sharePreview" src="" alt="Game Screenshot" class="share-preview">
+                <p class="share-text">Choose a platform to share your score:</p>
+                <div class="share-buttons">
+                    <button class="btn share-btn linkedin" data-platform="linkedin">LinkedIn</button>
+                    <button class="btn share-btn twitter" data-platform="twitter">X (Twitter)</button>
+                    <button class="btn share-btn xing" data-platform="xing">Xing</button>
+                    <button class="btn share-btn email" data-platform="email">Email</button>
+                </div>
+                <button id="closeShareBtn" class="btn secondary" style="margin-top: 20px;">Close</button>
             </div>
         </div>
 

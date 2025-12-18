@@ -91,7 +91,17 @@ class Game {
         document.getElementById('restartBtn').addEventListener('click', () => this.startGame('restart'));
         
         // Share button
-        document.getElementById('shareBtn').addEventListener('click', () => this.shareResult());
+        document.getElementById('shareBtn').addEventListener('click', () => this.openShareModal());
+
+        // Share Modal Close
+        document.getElementById('closeShareBtn').addEventListener('click', () => {
+            document.getElementById('shareModal').classList.add('hidden');
+        });
+
+        // Share Platform Buttons
+        document.querySelectorAll('.share-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.handleShare(e.target.closest('.share-btn').dataset.platform));
+        });
 
         // Flap controls
         const flapHandler = (e) => {
@@ -327,20 +337,37 @@ class Game {
         this.audio.score();
     }
 
-    shareResult() {
+    openShareModal() {
+        // Generate Screenshot
+        const dataUrl = this.canvas.toDataURL('image/png');
+        document.getElementById('sharePreview').src = dataUrl;
+        
+        // Show Modal
+        document.getElementById('shareModal').classList.remove('hidden');
+    }
+
+    handleShare(platform) {
         const text = `I cleared ${this.score} challenges in Flappy Corp! Can you beat my 2026 readiness score? #FlappyCorp`;
-        if (navigator.share) {
-            navigator.share({
-                title: 'Flappy Corp',
-                text: text,
-                url: window.location.href
-            }).catch(console.error);
-        } else {
-            navigator.clipboard.writeText(text).then(() => {
-                this.showToast("Result copied to clipboard!");
-            }).catch(() => {
-                this.showToast("Failed to copy result.");
-            });
+        const url = window.location.href;
+        let shareUrl = '';
+
+        switch(platform) {
+            case 'linkedin':
+                shareUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(text + ' ' + url)}`;
+                break;
+            case 'twitter':
+                shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+                break;
+            case 'xing':
+                shareUrl = `https://www.xing.com/spi/shares/new?url=${encodeURIComponent(url)}`;
+                break;
+            case 'email':
+                shareUrl = `mailto:?subject=Flappy Corp Score&body=${encodeURIComponent(text + '\n\nPlay here: ' + url)}`;
+                break;
+        }
+
+        if (shareUrl) {
+            window.open(shareUrl, '_blank', 'width=600,height=400');
         }
     }
 
