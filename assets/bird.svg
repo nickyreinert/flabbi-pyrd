@@ -1,18 +1,36 @@
 <svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-  <!-- Body -->
-  <rect x="10" y="15" width="35" height="30" rx="10" fill="#FFD700" stroke="#000" stroke-width="3"/>
-  
-  <!-- Eye -->
-  <circle cx="35" cy="22" r="10" fill="#FFF" stroke="#000" stroke-width="3"/>
-  <circle cx="38" cy="22" r="3" fill="#000"/>
-  
-  <!-- Beak -->
-  <path d="M 40 30 L 55 30 L 55 40 L 40 40 Z" fill="#FF4500" stroke="#000" stroke-width="3"/>
-  
-  <!-- Wing -->
-  <path d="M 5 32 Q 20 32 25 38 Q 10 44 5 32" fill="#FFF" stroke="#000" stroke-width="3"/>
-  
-  <!-- Tie -->
-  <path d="M 22 40 L 27 55 L 32 40 Z" fill="#DC143C" stroke="#000" stroke-width="2"/>
-  <circle cx="27" cy="40" r="3" fill="#DC143C" stroke="#000" stroke-width="2"/>
+  <!-- 
+    To switch between the Duck and the Paper Plane, 
+    change the display attribute to "inline" or "none".
+  -->
+
+  <!-- Duck Sprite -->
+  <g id="duck" display="none">
+    <!-- Body -->
+    <rect x="10" y="15" width="35" height="30" rx="10" fill="#FFD700" stroke="#000" stroke-width="3"/>
+    
+    <!-- Eye -->
+    <circle cx="35" cy="22" r="10" fill="#FFF" stroke="#000" stroke-width="3"/>
+    <circle cx="38" cy="22" r="3" fill="#000"/>
+    
+    <!-- Beak -->
+    <path d="M 40 30 L 55 30 L 55 40 L 40 40 Z" fill="#FF4500" stroke="#000" stroke-width="3"/>
+    
+    <!-- Wing -->
+    <path d="M 5 32 Q 20 32 25 38 Q 10 44 5 32" fill="#FFF" stroke="#000" stroke-width="3"/>
+    
+    <!-- Tie -->
+    <path d="M 22 40 L 27 55 L 32 40 Z" fill="#DC143C" stroke="#000" stroke-width="2"/>
+    <circle cx="27" cy="40" r="3" fill="#DC143C" stroke="#000" stroke-width="2"/>
+  </g>
+
+  <!-- Paper Plane Sprite -->
+  <g id="paper-plane" display="inline">
+    <!-- Main Body -->
+    <path d="M 5 15 L 55 30 L 5 45 L 15 30 Z" fill="#F0F8FF" stroke="#000" stroke-width="3" stroke-linejoin="round"/>
+    <!-- Center Fold -->
+    <path d="M 15 30 L 55 30" stroke="#000" stroke-width="2"/>
+    <!-- Wing Shadow/Detail -->
+    <path d="M 15 30 L 5 45 L 35 36 Z" fill="#B0C4DE" opacity="0.5"/>
+  </g>
 </svg>
